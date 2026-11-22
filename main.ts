@@ -17,8 +17,9 @@ const T: [number, number, number, number][] = [
   [52, 0, 0, 0], [64, 0, 1, 1], [65, 0, 2, 0], [80, 0, 1, 0], [81, 0, 1, 0],
   [82, 0, 0, 1], [83, 0, 1, 0],
 ];
-const S: ([number, number, number] | undefined)[] = new Array(256);
-for (const [b, i, p, q] of T) S[b] = [i, p, q];
+// Flat tables: IM 255 = unknown opcode.
+const IM = new Uint8Array(256).fill(255), PP = new Uint8Array(256), PS = new Uint8Array(256);
+for (const [b, i, p, q] of T) { IM[b] = i; PP[b] = p; PS[b] = q; }
 
 function run(p: Buffer, inp: Buffer) {
   const n = p.length, d = new Int32Array(SM);
@@ -31,9 +32,9 @@ function run(p: Buffer, inp: Buffer) {
   for (;;) {
     if (st === SL) return fin(10);
     if (pc < 0 || pc >= n) return fin(9);
-    const op = p[pc], s = S[op];
-    if (!s) return fin(5);
-    const [im, pp, ps] = s;
+    const op = p[pc], im = IM[op];
+    if (im === 255) return fin(5);
+    const pp = PP[op], ps = PS[op];
     if (pc + im >= n) return fin(9);
     st++;
     const nx = pc + 1 + im;
